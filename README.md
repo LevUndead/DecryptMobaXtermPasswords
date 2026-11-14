@@ -168,3 +168,27 @@ __If you have set a master password in MobaXterm:__
    ```
 
    where `12345678` is the master password you set.
+
+## 4. Supported storage layouts
+
+`ShowMobaXterm.py` detects the layout automatically:
+
+| MobaXterm version | Stored value | Crypto |
+| --- | --- | --- |
+| < 20.x | characters picked from a session key alphabet | nibble obfuscation, key derived from `SessionP` / `<user>@<host>` |
+| 20.x - 24.x | `base64` | AES-256-CFB8, key = first 32 bytes of `SHA512(master password)`, IV = `AES-ECB(key, 0)` |
+| 25.x / 26.x | `_@` + 18-char salt + `base64` | same key, IV = first 16 characters of the salt |
+
+For 20.x and newer the key is read from
+`HKCU\Software\Mobatek\MobaXterm\M` and unprotected with Windows DPAPI
+(entropy = `SessionP`), so the script must run under the same Windows user,
+on the same machine, and with the master password that was active when the
+values were written.
+
+Useful options:
+
+```
+python3 ShowMobaXterm.py            # automatic mode
+python3 ShowMobaXterm.py --raw      # also print the stored (encrypted) values
+python3 ShowMobaXterm.py <master>   # force a master password
+```
